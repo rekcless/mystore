@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — NOVA</title><link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="site-header"><a class="logo" href="../index.html">NOVA<span>.</span></a><div class="checkout-label">CHECKOUT</div></header>
+<main class="container page">
+  <div class="page-title"><span class="eyebrow">CHECKOUT</span><h1>Selesaikan Pesanan</h1></div>
+  <div class="checkout-layout">
+    <form id="checkout-form" class="checkout-form">
+      <section class="form-card"><h2>Informasi pelanggan</h2>
+        <div class="form-grid"><label>Nama lengkap<input required name="name" placeholder="Nama lengkap"></label><label>Email<input required type="email" name="email" placeholder="nama@email.com"></label><label>No. WhatsApp<input required name="phone" placeholder="08xxxxxxxxxx"></label><label>Kota<input required name="city" placeholder="Kota"></label></div>
+        <label>Alamat lengkap<textarea required name="address" rows="4" placeholder="Alamat pengiriman"></textarea></label>
+      </section>
+      <section class="form-card"><h2>Metode pembayaran</h2><label class="radio"><input required type="radio" name="payment" value="transfer"> Transfer bank</label><label class="radio"><input type="radio" name="payment" value="cod"> COD</label><label class="radio"><input type="radio" name="payment" value="ewallet"> E-Wallet</label></section>
+      <button class="btn btn-dark btn-full" type="submit">Buat Pesanan</button>
+    </form>
+    <aside id="checkout-summary" class="summary-card"></aside>
+  </div>
+</main>
+<script type="module" src="../js/products.js"></script><script type="module" src="../js/app.js"></script><script type="module" src="../js/checkout.js"></script>
+</body>
+</html>
