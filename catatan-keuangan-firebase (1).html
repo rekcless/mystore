@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catatan Keuangan</title>
+<style>
+  :root {
+    --bg: #f3f5f9; --card: #ffffff; --text: #1d2433; --muted: #6b7486; --line: #e3e7ef;
+    --income: #16a36a; --expense: #e5484d; --primary: #3b5bdb; --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #11141b; --card: #1a1f2b; --text: #e8ecf4; --muted: #8c95a8; --line: #2a3142; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); padding: 16px; }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; }
+  .sub { color: var(--muted); font-size: 0.9rem; }
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .topbar .grow { flex: 1; min-width: 200px; }
+  .user { color: var(--muted); font-size: 0.85rem; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .card h2 { font-size: 1.05rem; margin-bottom: 12px; }
+
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .toolbar .spacer { flex: 1; }
+
+  .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+  .stat .label { color: var(--muted); font-size: 0.8rem; }
+  .stat .value { font-size: 1.35rem; font-weight: 700; margin-top: 4px; word-break: break-word; }
+  .stat.income .value { color: var(--income); }
+  .stat.expense .value { color: var(--expense); }
+
+  .grid { display: grid; grid-template-columns: 340px 1fr; gap: 14px; align-items: start; }
+
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin: 10px 0 4px; }
+  input, select, button {
+    font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; width: 100%;
+  }
+  input:focus, select:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+  .toolbar input, .toolbar select { width: auto; }
+
+  .type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .type-toggle button { cursor: pointer; font-weight: 600; }
+  .type-toggle button.active.income { background: var(--income); border-color: var(--income); color: #fff; }
+  .type-toggle button.active.expense { background: var(--expense); border-color: var(--expense); color: #fff; }
+
+  .btn { cursor: pointer; font-weight: 600; text-align: center; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; margin-top: 14px; }
+  .btn.ghost { width: auto; }
+  .btn.danger { color: var(--expense); }
+  .btn:disabled { opacity: 0.6; cursor: wait; }
+
+  ul.list { list-style: none; }
+  .tx { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .tx:last-child { border-bottom: none; }
+  .tx .dot { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; flex: none; }
+  .tx.income .dot { background: rgba(22,163,106,.15); color: var(--income); }
+  .tx.expense .dot { background: rgba(229,72,77,.15); color: var(--expense); }
+  .tx .info { flex: 1; min-width: 0; }
+  .tx .cat { font-weight: 600; }
+  .tx .meta { color: var(--muted); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx .amt { font-weight: 700; white-space: nowrap; }
+  .tx.income .amt { color: var(--income); }
+  .tx.expense .amt { color: var(--expense); }
+  .tx .actions { display: flex; gap: 4px; }
+  .icon-btn { width: 32px; height: 32px; padding: 0; cursor: pointer; display: grid; place-items: center; border-radius: 8px; background: transparent; }
+  .empty { color: var(--muted); text-align: center; padding: 24px 0; }
+
+  .bars { margin-top: 14px; }
+  .bar-row { margin-bottom: 10px; }
+  .bar-head { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; }
+  .bar-track { background: var(--bg); border-radius: 999px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--expense); border-radius: 999px; }
+
+  /* Login */
+  #authView { max-width: 380px; margin: 8vh auto 0; }
+  #authView .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  #authView .btn.primary { margin-top: 0; }
+  .msg { font-size: 0.85rem; margin-top: 10px; color: var(--expense); min-height: 1.2em; }
+  .divider { text-align: center; color: var(--muted); font-size: 0.8rem; margin: 14px 0 2px; }
+  .setup { background: rgba(229,72,77,.1); border: 1px solid var(--expense); color: var(--text);
+           border-radius: 10px; padding: 12px; font-size: 0.9rem; margin-bottom: 12px; display: none; }
+
+  .hidden { display: none !important; }
+  #syncState { font-size: 0.75rem; color: var(--muted); }
+
+  @media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+    .summary { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="setup" id="setupWarning">
+    Konfigurasi Firebase belum diisi. Buka file ini, cari <b>firebaseConfig</b>, lalu tempel konfigurasi dari proyek Firebase Anda.
+  </div>
+
+  <div id="appView">
+    <div class="topbar">
+      <div class="grow">
+        <h1>💰 Catatan Keuangan</h1>
+        <p class="sub">Data tersimpan di cloud dan tersinkron antar perangkat. <span id="syncState"></span></p>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input type="month" id="filterMonth" title="Filter bulan">
+      <select id="filterType">
+        <option value="all">Semua jenis</option>
+        <option value="income">Pemasukan</option>
+        <option value="expense">Pengeluaran</option>
+      </select>
+      <input type="search" id="search" placeholder="Cari catatan…">
+      <span class="spacer"></span>
+      <button class="btn ghost" id="btnImport" class="hidden">Impor data lama</button>
+      <button class="btn ghost" id="btnAllMonths">Semua bulan</button>
+      <button class="btn ghost" id="btnExport">Ekspor CSV</button>
+      <button class="btn ghost danger" id="btnClear">Hapus semua</button>
+    </div>
+
+    <div class="summary">
+      <div class="card stat income"><div class="label">Pemasukan</div><div class="value" id="sumIncome">Rp 0</div></div>
+      <div class="card stat expense"><div class="label">Pengeluaran</div><div class="value" id="sumExpense">Rp 0</div></div>
+      <div class="card stat"><div class="label">Saldo</div><div class="value" id="sumBalance">Rp 0</div></div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <form class="card" id="form" autocomplete="off">
+          <h2 id="formTitle">Tambah transaksi</h2>
+          <div class="type-toggle">
+            <button type="button" class="income active" data-type="income">＋ Pemasukan</button>
+            <button type="button" class="expense" data-type="expense">－ Pengeluaran</button>
+          </div>
+
+          <label for="amount">Jumlah (Rp)</label>
+          <input id="amount" type="text" inputmode="numeric" placeholder="0" required>
+
+          <label for="category">Kategori</label>
+          <select id="category"></select>
+
+          <label for="date">Tanggal</label>
+          <input id="date" type="date" required>
+
+          <label for="note">Catatan (opsional)</label>
+          <input id="note" type="text" maxlength="100" placeholder="Mis. makan siang">
+
+          <button class="btn primary" type="submit" id="btnSubmit">Simpan</button>
+          <button class="btn" type="button" id="btnCancel" style="display:none; margin-top:8px;">Batal ubah</button>
+        </form>
+
+        <div class="card bars" style="margin-top:14px;">
+          <h2>Pengeluaran per kategori</h2>
+          <div id="bars"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Riwayat transaksi</h2>
+        <ul class="list" id="list"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  initializeFirestore, getFirestore, persistentLocalCache, collection, doc, addDoc, setDoc, deleteDoc,
+  onSnapshot, writeBatch, getDocs, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* =====================================================================
+   1) TEMPEL KONFIGURASI FIREBASE ANDA DI SINI
+      (Firebase Console → Project settings → Your apps → Web app → firebaseConfig)
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAQj09a-koXumh46M4SHGfOFb5kEQL21eE",
+  authDomain: "wallet-9a18e.firebaseapp.com",
+  projectId: "wallet-9a18e",
+  storageBucket: "wallet-9a18e.firebasestorage.app",
+  messagingSenderId: "391327838796",
+  appId: "1:391327838796:web:23a7ad1177e15fe8587ae9",
+  measurementId: "G-87BGRW8MR7"
+};
+
+/* 2) Kategori — silakan ubah */
+const CATEGORIES = {
+  income:  ["Gaji", "Bonus", "Usaha", "Hadiah", "Investasi", "Lainnya"],
+  expense: ["Makanan", "Transportasi", "Tagihan", "Belanja", "Kesehatan", "Hiburan", "Pendidikan", "Sedekah", "Lainnya"]
+};
+
+/* ---------- Util ---------- */
+const $ = id => document.getElementById(id);
+const rupiah = n => "Rp " + Math.round(n).toLocaleString("id-ID");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const fmtDate = s => {
+  const [y, m, d] = s.split("-");
+  return new Date(y, m - 1, d).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+};
+const OLD_KEY = "catatan-keuangan-v1"; // data versi localStorage
+
+/* ---------- Firebase ---------- */
+const configured = !firebaseConfig.apiKey.startsWith("ISI_");
+// Catatan: Analytics tidak dipakai, jadi tidak perlu dimuat.
+let db;
+if (configured) {
+  const app = initializeApp(firebaseConfig);
+  try {
+    db = initializeFirestore(app, { localCache: persistentLocalCache() }); // tetap bisa dipakai offline
+  } catch (e) {
+    db = getFirestore(app);
+  }
+} else {
+  $("setupWarning").style.display = "block";
+  $("appView").classList.add("hidden");
+}
+
+let transactions = [];
+let currentType = "income";
+let editingId = null;
+
+const txCol = () => collection(db, "transactions");
+
+/* ---------- Sinkronisasi data ---------- */
+function startApp() {
+  resetForm();
+  $("filterMonth").value = todayStr().slice(0, 7);
+  $("syncState").textContent = "• memuat…";
+  onSnapshot(txCol(), { includeMetadataChanges: true }, snap => {
+    transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    $("syncState").textContent = snap.metadata.hasPendingWrites ? "• menyinkronkan…" : (snap.metadata.fromCache ? "• offline" : "• tersinkron ✓");
+    render();
+  }, err => {
+    $("syncState").textContent = "• gagal memuat";
+    alert("Gagal memuat data: " + err.message + "\nPeriksa aturan (rules) Firestore Anda.");
+  });
+
+  let old = [];
+  try { old = JSON.parse(localStorage.getItem(OLD_KEY)) || []; } catch (e) {}
+  $("btnImport").style.display = old.length ? "" : "none";
+}
+
+/* ---------- Form ---------- */
+function fillCategories() {
+  $("category").innerHTML = CATEGORIES[currentType].map(c => `<option>${c}</option>`).join("");
+}
+function setType(type) {
+  currentType = type;
+  document.querySelectorAll(".type-toggle button").forEach(b => b.classList.toggle("active", b.dataset.type === type));
+  fillCategories();
+}
+document.querySelectorAll(".type-toggle button").forEach(b => b.addEventListener("click", () => setType(b.dataset.type)));
+
+$("amount").addEventListener("input", e => {
+  const digits = e.target.value.replace(/\D/g, "");
+  e.target.value = digits ? Number(digits).toLocaleString("id-ID") : "";
+});
+
+function resetForm() {
+  editingId = null;
+  $("form").reset();
+  $("date").value = todayStr();
+  $("formTitle").textContent = "Tambah transaksi";
+  $("btnSubmit").textContent = "Simpan";
+  $("btnCancel").style.display = "none";
+  setType(currentType);
+}
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const amount = Number($("amount").value.replace(/\D/g, ""));
+  if (!amount) { $("amount").focus(); return; }
+
+  const data = {
+    type: currentType,
+    amount,
+    category: $("category").value,
+    date: $("date").value,
+    note: $("note").value.trim()
+  };
+
+  $("btnSubmit").disabled = true;
+  try {
+    if (editingId) await setDoc(doc(db, "transactions", editingId), data, { merge: true });
+    else await addDoc(txCol(), { ...data, createdAt: serverTimestamp() });
+    resetForm();
+  } catch (err) {
+    alert("Gagal menyimpan: " + err.message);
+  } finally {
+    $("btnSubmit").disabled = false;
+  }
+});
+$("btnCancel").addEventListener("click", resetForm);
+
+/* ---------- Filter ---------- */
+function visibleTransactions() {
+  const month = $("filterMonth").value;
+  const type = $("filterType").value;
+  const q = $("search").value.trim().toLowerCase();
+  return transactions
+    .filter(t => !month || t.date.startsWith(month))
+    .filter(t => type === "all" || t.type === type)
+    .filter(t => !q || ((t.note || "") + " " + t.category).toLowerCase().includes(q))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+}
+["filterMonth", "filterType", "search"].forEach(id => $(id).addEventListener("input", render));
+$("btnAllMonths").addEventListener("click", () => { $("filterMonth").value = ""; render(); });
+
+/* ---------- Render ---------- */
+function render() {
+  const list = visibleTransactions();
+  const income = list.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const expense = list.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  $("sumIncome").textContent = rupiah(income);
+  $("sumExpense").textContent = rupiah(expense);
+  $("sumBalance").textContent = rupiah(income - expense);
+  $("sumBalance").style.color = income - expense < 0 ? "var(--expense)" : "";
+
+  $("list").innerHTML = list.length
+    ? list.map(t => `
+      <li class="tx ${t.type}">
+        <div class="dot">${t.type === "income" ? "＋" : "－"}</div>
+        <div class="info">
+          <div class="cat">${esc(t.category)}</div>
+          <div class="meta">${fmtDate(t.date)}${t.note ? " · " + esc(t.note) : ""}</div>
+        </div>
+        <div class="amt">${t.type === "income" ? "+" : "-"}${rupiah(t.amount)}</div>
+        <div class="actions">
+          <button class="icon-btn" title="Ubah" data-edit="${t.id}">✏️</button>
+          <button class="icon-btn" title="Hapus" data-del="${t.id}">🗑️</button>
+        </div>
+      </li>`).join("")
+    : `<li class="empty">Belum ada transaksi.</li>`;
+
+  const byCat = {};
+  list.filter(t => t.type === "expense").forEach(t => byCat[t.category] = (byCat[t.category] || 0) + t.amount);
+  const rows = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+  $("bars").innerHTML = rows.length
+    ? rows.map(([cat, val]) => `
+      <div class="bar-row">
+        <div class="bar-head"><span>${esc(cat)}</span><span>${rupiah(val)} (${Math.round(val / expense * 100)}%)</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${val / expense * 100}%"></div></div>
+      </div>`).join("")
+    : `<div class="empty">Belum ada pengeluaran.</div>`;
+}
+
+$("list").addEventListener("click", async e => {
+  const editBtn = e.target.closest("[data-edit]");
+  const delBtn = e.target.closest("[data-del]");
+
+  if (delBtn && confirm("Hapus transaksi ini?")) {
+    try {
+      await deleteDoc(doc(db, "transactions", delBtn.dataset.del));
+      if (editingId === delBtn.dataset.del) resetForm();
+    } catch (err) { alert("Gagal menghapus: " + err.message); }
+  }
+  if (editBtn) {
+    const t = transactions.find(x => x.id === editBtn.dataset.edit);
+    if (!t) return;
+    editingId = t.id;
+    setType(t.type);
+    $("amount").value = t.amount.toLocaleString("id-ID");
+    $("category").value = t.category;
+    $("date").value = t.date;
+    $("note").value = t.note || "";
+    $("formTitle").textContent = "Ubah transaksi";
+    $("btnSubmit").textContent = "Simpan perubahan";
+    $("btnCancel").style.display = "block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+});
+
+/* ---------- Ekspor, impor, hapus semua ---------- */
+$("btnExport").addEventListener("click", () => {
+  const list = visibleTransactions();
+  if (!list.length) { alert("Tidak ada data untuk diekspor."); return; }
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = ["Tanggal,Jenis,Kategori,Jumlah,Catatan"]
+    .concat(list.map(t => [t.date, t.type === "income" ? "Pemasukan" : "Pengeluaran", q(t.category), t.amount, q(t.note)].join(",")))
+    .join("\n");
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "catatan-keuangan.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+$("btnImport").addEventListener("click", async () => {
+  let old = [];
+  try { old = JSON.parse(localStorage.getItem(OLD_KEY)) || []; } catch (e) {}
+  if (!old.length) return;
+  if (!confirm(`Impor ${old.length} transaksi dari penyimpanan browser lama ke cloud?`)) return;
+  try {
+    for (let i = 0; i < old.length; i += 400) {
+      const batch = writeBatch(db);
+      old.slice(i, i + 400).forEach(t => {
+        batch.set(doc(db, "transactions", String(t.id)), {
+          type: t.type, amount: t.amount, category: t.category, date: t.date, note: t.note || "",
+          createdAt: serverTimestamp()
+        });
+      });
+      await batch.commit();
+    }
+    localStorage.removeItem(OLD_KEY);
+    $("btnImport").style.display = "none";
+    alert("Impor selesai.");
+  } catch (err) { alert("Gagal impor: " + err.message); }
+});
+
+$("btnClear").addEventListener("click", async () => {
+  if (!transactions.length) return;
+  if (!confirm("Hapus SEMUA transaksi di cloud? Tindakan ini tidak bisa dibatalkan.")) return;
+  try {
+    const snap = await getDocs(txCol());
+    const docs = snap.docs;
+    for (let i = 0; i < docs.length; i += 400) {
+      const batch = writeBatch(db);
+      docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    resetForm();
+  } catch (err) { alert("Gagal menghapus: " + err.message); }
+});
+
+/* ---------- Mulai ---------- */
+fillCategories();
+if (configured) startApp();
+</script>
+</body>
+</html>
