@@ -19,7 +19,6 @@
   .sub { color: var(--muted); font-size: 0.9rem; }
   .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
   .topbar .grow { flex: 1; min-width: 200px; }
-  .user { color: var(--muted); font-size: 0.85rem; }
 
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
   .card h2 { font-size: 1.05rem; margin-bottom: 12px; }
@@ -76,12 +75,6 @@
   .bar-track { background: var(--bg); border-radius: 999px; height: 8px; overflow: hidden; }
   .bar-fill { height: 100%; background: var(--expense); border-radius: 999px; }
 
-  /* Login */
-  #authView { max-width: 380px; margin: 8vh auto 0; }
-  #authView .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-  #authView .btn.primary { margin-top: 0; }
-  .msg { font-size: 0.85rem; margin-top: 10px; color: var(--expense); min-height: 1.2em; }
-  .divider { text-align: center; color: var(--muted); font-size: 0.8rem; margin: 14px 0 2px; }
   .setup { background: rgba(229,72,77,.1); border: 1px solid var(--expense); color: var(--text);
            border-radius: 10px; padding: 12px; font-size: 0.9rem; margin-bottom: 12px; display: none; }
 
@@ -118,7 +111,7 @@
       </select>
       <input type="search" id="search" placeholder="Cari catatan…">
       <span class="spacer"></span>
-      <button class="btn ghost" id="btnImport" class="hidden">Impor data lama</button>
+      <button class="btn ghost hidden" id="btnImport">Impor data lama</button>
       <button class="btn ghost" id="btnAllMonths">Semua bulan</button>
       <button class="btn ghost" id="btnExport">Ekspor CSV</button>
       <button class="btn ghost danger" id="btnClear">Hapus semua</button>
@@ -149,7 +142,7 @@
           <input id="date" type="date" required>
 
           <label for="note">Catatan (opsional)</label>
-          <input id="note" type="text" maxlength="100" placeholder="Mis. makan siang">
+          <input id="note" type="text" maxlength="100" placeholder="Mis. beli bensin">
 
           <button class="btn primary" type="submit" id="btnSubmit">Simpan</button>
           <button class="btn" type="button" id="btnCancel" style="display:none; margin-top:8px;">Batal ubah</button>
@@ -177,8 +170,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 /* =====================================================================
-   1) TEMPEL KONFIGURASI FIREBASE ANDA DI SINI
-      (Firebase Console → Project settings → Your apps → Web app → firebaseConfig)
+   1) KONFIGURASI FIREBASE
    ===================================================================== */
 const firebaseConfig = {
   apiKey: "AIzaSyAQj09a-koXumh46M4SHGfOFb5kEQL21eE",
@@ -192,8 +184,8 @@ const firebaseConfig = {
 
 /* 2) Kategori — silakan ubah */
 const CATEGORIES = {
-  income:  ["Gaji", "Bonus", "Usaha", "Hadiah", "Investasi", "Lainnya"],
-  expense: ["Makanan", "Transportasi", "Tagihan", "Belanja", "Kesehatan", "Hiburan", "Pendidikan", "Sedekah", "Lainnya"]
+  income:  ["Gajian"],
+  expense: ["Jajan", "Istri", "Bensin"]
 };
 
 /* ---------- Util ---------- */
@@ -212,7 +204,6 @@ const OLD_KEY = "catatan-keuangan-v1"; // data versi localStorage
 
 /* ---------- Firebase ---------- */
 const configured = !firebaseConfig.apiKey.startsWith("ISI_");
-// Catatan: Analytics tidak dipakai, jadi tidak perlu dimuat.
 let db;
 if (configured) {
   const app = initializeApp(firebaseConfig);
@@ -248,12 +239,12 @@ function startApp() {
 
   let old = [];
   try { old = JSON.parse(localStorage.getItem(OLD_KEY)) || []; } catch (e) {}
-  $("btnImport").style.display = old.length ? "" : "none";
+  $("btnImport").classList.toggle("hidden", !old.length);
 }
 
 /* ---------- Form ---------- */
 function fillCategories() {
-  $("category").innerHTML = CATEGORIES[currentType].map(c => `<option>${c}</option>`).join("");
+  $("category").innerHTML = CATEGORIES[currentType].map(c => `<option>${esc(c)}</option>`).join("");
 }
 function setType(type) {
   currentType = type;
@@ -414,7 +405,7 @@ $("btnImport").addEventListener("click", async () => {
       await batch.commit();
     }
     localStorage.removeItem(OLD_KEY);
-    $("btnImport").style.display = "none";
+    $("btnImport").classList.add("hidden");
     alert("Impor selesai.");
   } catch (err) { alert("Gagal impor: " + err.message); }
 });
