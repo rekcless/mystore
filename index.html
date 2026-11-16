@@ -157,6 +157,23 @@ td.act{white-space:nowrap;display:flex;gap:6px}
 @media (max-width:900px){.shell{grid-template-columns:1fr}.side{position:static}.top input{width:130px}}
 @media (max-width:560px){.grid{grid-template-columns:1fr}.top .wrap{height:auto;padding-top:10px;padding-bottom:10px;flex-wrap:wrap}}
 @media (prefers-reduced-motion:reduce){.card{transition:none}}
+
+/* ===== mode gelap, bagikan, tag ===== */
+:root{--hd:#101828}
+[data-theme="dark"]{--bg:#0E151D;--surface:#17212C;--ink:#E8EDF2;--muted:#9AA8B6;--line:#2B3947;--accent:#4FD1BC;--accent-soft:#143530;--warn-soft:#3A2F14;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);color-scheme:dark}
+.top,.foot2,.bar{background:var(--hd)}
+.btn.primary,.cats a.on,.about{background:#0B6B5D;color:#fff}
+.btn.primary{border-color:#0B6B5D}
+[data-theme="dark"] .prose code{background:#26323F}
+.toast{background:var(--hd);color:#fff}
+button.adm{background:transparent;font:inherit;font-size:.88rem;color:#fff;cursor:pointer}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 8px}
+.tags a{font-family:var(--ui);font-size:.85rem;text-decoration:none;background:var(--accent-soft);color:var(--accent);padding:5px 12px;border-radius:999px}
+.share{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--ui);padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:16px}
+.tagbox{display:flex;gap:6px;flex-wrap:wrap}
+.tagbox a{font-family:var(--ui);font-size:.82rem;text-decoration:none;color:var(--ink);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+.tagbox a:hover{border-color:var(--accent);color:var(--accent)}
+.more{text-align:center;margin-top:28px}
 </style>
 </head>
 <body>
@@ -189,6 +206,15 @@ if (configured) {
 }
 
 const $app = document.getElementById("app");
+let theme; try { theme = localStorage.getItem("theme"); } catch (e) {}
+if (!theme) theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+document.documentElement.dataset.theme = theme;
+document.addEventListener("click", e => {
+  const b = e.target.closest("#th"); if (!b) return;
+  theme = theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = theme; b.textContent = theme === "dark" ? "Terang" : "Gelap";
+  try { localStorage.setItem("theme", theme); } catch (err) {}
+});
 const state = { user: null, authReady: !configured, cat: "", q: "", cats: [], posts: null };
 
 /* ---------- helpers ---------- */
@@ -274,6 +300,7 @@ const masthead = (active = "") => `
   <header class="top"><div class="wrap">
     <a class="brand" href="#/">${esc(BLOG_NAME)}</a>
     <form id="sf"><input id="sq" type="search" placeholder="Cari artikel" aria-label="Cari artikel" value="${esc(state.q)}"></form>
+    <button class="adm" id="th" type="button" aria-label="Ganti tema">${theme === "dark" ? "Terang" : "Gelap"}</button>
     <a class="adm" href="#/admin">${state.user ? "Dasbor" : "Admin"}</a>
   </div></header>
   <nav class="cats" aria-label="Kategori"><div class="wrap">
@@ -299,6 +326,8 @@ const card = p => `
       <h3>${esc(p.title)}</h3><p>${esc(p.excerpt || "")}</p>
       <span class="mt">${fmtDate(p.createdAt)} &middot; ${readMin(p.content)} menit baca</span></div>
   </a>`;
+const tagCounts = () => { const c = {}; state.posts.forEach(p => (p.tags || []).forEach(t => c[t] = (c[t] || 0) + 1)); return Object.keys(c).sort((a, b) => c[b] - c[a]).slice(0, 14); };
+const parseTags = v => [...new Set(v.split(",").map(t => t.trim().toLowerCase().replace(/^#/, "")).filter(Boolean))].slice(0, 8);
 function sidebar() {
   const top = [...state.posts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
   const counts = {}; state.posts.forEach(p => { if (p.category) counts[p.category] = (counts[p.category] || 0) + 1; });
@@ -309,20 +338,22 @@ function sidebar() {
     <div class="box"><h4>Kategori</h4><ul class="catlist">
       ${state.cats.map(c => `<li><a href="${catSlug(c)}">${esc(c)}<em>${counts[c]}</em></a></li>`).join("") || "<li>Belum ada kategori.</li>"}
     </ul></div>
+    <div class="box"><h4>Tag</h4><div class="tagbox">${tagCounts().map(t => `<a href="#/tag/${encodeURIComponent(t)}">#${esc(t)}</a>`).join("") || "Belum ada tag."}</div></div>
     <div class="box about"><h4>Tentang blog</h4><p>${esc(BLOG_TAGLINE)}</p></div>
   </aside>`;
 }
 
 /* ---------- public: beranda & kategori ---------- */
-async function viewHome(cat = "") {
+async function viewHome(cat = "", tag = "") {
   if (!configured) { $app.innerHTML = masthead() + setupNotice() + footer(); return; }
   await ensurePosts(true);
   state.cat = cat;
   const q = state.q.trim().toLowerCase();
-  const list = state.posts.filter(p => (!cat || p.category === cat) &&
-    (!q || (p.title + " " + (p.excerpt || "")).toLowerCase().includes(q)));
+  const list = state.posts.filter(p => (!cat || p.category === cat) && (!tag || (p.tags || []).includes(tag)) &&
+    (!q || (p.title + " " + (p.excerpt || "") + " " + (p.tags || []).join(" ")).toLowerCase().includes(q)));
   const hero = !q && list.length ? list[0] : null, rest = hero ? list.slice(1) : list;
-  const heading = q ? `Hasil pencarian “${esc(state.q)}”` : cat ? esc(cat) : "Artikel terbaru";
+  const heading = q ? `Hasil pencarian “${esc(state.q)}”` : tag ? "#" + esc(tag) : cat ? esc(cat) : "Artikel terbaru";
+  let shown = 6;
   $app.innerHTML = masthead(cat) + `<main class="shell"><section>
     ${state.err ? `<div class="notice">Gagal memuat artikel. Cek aturan Firestore dan koneksi internet.</div>` : ""}
     ${hero ? `<a class="hero" href="#/post/${hero.id}">
@@ -330,9 +361,21 @@ async function viewHome(cat = "") {
       <div class="tx">${hero.category ? `<span class="tag">${esc(hero.category)}</span>` : ""}
       <h2>${esc(hero.title)}</h2><p>${esc(hero.excerpt || "")}</p></div></a>` : ""}
     <h2 class="sec">${heading}</h2>
-    ${rest.length || hero ? `<div class="grid">${rest.map(card).join("")}</div>` : `<p class="empty">Belum ada artikel yang cocok.</p>`}
+    ${list.length ? `<div class="grid" id="gr"></div><p class="more"><button class="btn" id="more" type="button">Muat lebih banyak</button></p>` : `<p class="empty">Belum ada artikel yang cocok.</p>`}
   </section>${sidebar()}</main>` + footer();
   bindHead();
+  const gr = document.getElementById("gr"), more = document.getElementById("more");
+  if (!gr) return;
+  const draw = () => { gr.innerHTML = rest.slice(0, shown).map(card).join(""); more.hidden = shown >= rest.length; };
+  more.addEventListener("click", () => { shown += 6; draw(); });
+  draw();
+}
+
+function bindShare(p, url) {
+  document.getElementById("cp")?.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(url); toast("Tautan disalin"); } catch (e) { toast("Gagal menyalin tautan"); }
+  });
+  document.getElementById("ns")?.addEventListener("click", () => navigator.share({ title: p.title, url }).catch(() => {}));
 }
 
 /* ---------- public: baca artikel ---------- */
@@ -344,14 +387,23 @@ async function viewPost(id) {
   if (!p) { $app.innerHTML = masthead() + `<main class="shell"><section class="article"><a class="back" href="#/">Kembali ke beranda</a><h1>Artikel tidak ditemukan</h1><p>Artikel ini belum terbit atau sudah dihapus.</p></section>${sidebar()}</main>` + footer(); bindHead(); return; }
   try { if (p.status === "published" && !state.user && !sessionStorage.getItem("v_" + id)) { sessionStorage.setItem("v_" + id, "1"); updateDoc(doc(db, "posts", id), { views: increment(1) }).catch(() => {}); } } catch (e) {}
   document.title = p.title + " – " + BLOG_NAME;
+  const url = location.href.split("#")[0] + "#/post/" + p.id;
+  const rel = state.posts.filter(x => x.id !== p.id)
+    .sort((x, y) => (y.category === p.category) - (x.category === p.category) || secs(y.createdAt) - secs(x.createdAt)).slice(0, 4);
+  const extras = ((p.tags || []).length ? `<div class="tags">${p.tags.map(t => `<a href="#/tag/${encodeURIComponent(t)}">#${esc(t)}</a>`).join("")}</div>` : "") + `
+    <div class="share"><strong>Bagikan</strong>
+      <a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(p.title + " " + url)}">WhatsApp</a>
+      <button class="btn small" id="cp" type="button">Salin tautan</button>
+      ${navigator.share ? `<button class="btn small" id="ns" type="button">Lainnya</button>` : ""}</div>
+    ${rel.length ? `<h2 class="sec">Baca juga</h2><div class="grid">${rel.map(card).join("")}</div>` : ""}`;
   $app.innerHTML = masthead(p.category || "") + `
     <main class="shell"><section class="article">
       <a class="back" href="#/">Kembali ke beranda</a>
       <h1>${esc(p.title)}</h1>
       <div class="byline">${fmtDate(p.createdAt)}${p.category ? " &middot; " + esc(p.category) : ""} &middot; ${readMin(p.content)} menit baca${p.status !== "published" ? " &middot; Draft (hanya admin)" : ""}</div>
       ${safeUrl(p.coverUrl) ? `<img class="cover" src="${esc(safeUrl(p.coverUrl))}" alt="">` : ""}
-      <div class="prose">${md(p.content)}</div>
-    </section>${sidebar()}</main>` + footer(); bindHead();
+      <div class="prose">${md(p.content)}</div>${extras}
+    </section>${sidebar()}</main>` + footer(); bindHead(); bindShare(p, url);
 }
 
 /* ---------- admin: login ---------- */
@@ -364,7 +416,7 @@ function viewLogin() {
       <p class="err" id="er" role="alert"></p>
       <p><button class="btn primary" type="submit">Masuk</button></p>
     </form></main>` + footer();
-  document.getElementById("pin").focus();
+  document.getElementById("pin").focus(); bindHead();
   document.getElementById("lf").addEventListener("submit", async e => {
     e.preventDefault();
     const btn = e.target.querySelector("button"); btn.disabled = true;
@@ -433,6 +485,7 @@ async function viewEditor(id) {
             <option value="draft" ${p.status !== "published" ? "selected" : ""}>Draft</option>
             <option value="published" ${p.status === "published" ? "selected" : ""}>Terbit</option></select></div>
         </div>
+        <label for="g">Tag (pisahkan dengan koma)</label><input id="g" value="${esc((p.tags || []).join(", "))}" placeholder="mis. tips, android, pemula">
         <label for="x">Ringkasan</label><input id="x" maxlength="220" value="${esc(p.excerpt)}" placeholder="Satu atau dua kalimat untuk daftar artikel">
         <label for="u">Tautan gambar sampul</label><input id="u" type="url" value="${esc(p.coverUrl)}" placeholder="https://…">
         <div class="editor">
@@ -473,7 +526,7 @@ async function viewEditor(id) {
     const data = {
       title: document.getElementById("t").value.trim(), category: document.getElementById("c").value.trim(),
       excerpt: document.getElementById("x").value.trim(), coverUrl: document.getElementById("u").value.trim(),
-      content: b.value, status: document.getElementById("s").value, updatedAt: serverTimestamp()
+      tags: parseTags(document.getElementById("g").value), content: b.value, status: document.getElementById("s").value, updatedAt: serverTimestamp()
     };
     try {
       if (id) await updateDoc(doc(db, "posts", id), data);
@@ -492,6 +545,7 @@ function route() {
   document.title = BLOG_NAME;
   const parts = (location.hash.slice(1) || "/").split("/").filter(Boolean);
   if (parts[0] === "post" && parts[1]) return viewPost(parts[1]);
+  if (parts[0] === "tag" && parts[1]) { state.q = ""; return viewHome("", decodeURIComponent(parts[1])); }
   if (parts[0] === "kategori" && parts[1]) { state.q = ""; return viewHome(decodeURIComponent(parts[1])); }
   if (parts[0] === "admin") {
     if (!configured) { $app.innerHTML = masthead() + setupNotice() + footer(); return; }
