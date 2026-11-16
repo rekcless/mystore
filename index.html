@@ -174,6 +174,29 @@ button.adm{background:transparent;font:inherit;font-size:.88rem;color:#fff;curso
 .tagbox a{font-family:var(--ui);font-size:.82rem;text-decoration:none;color:var(--ink);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
 .tagbox a:hover{border-color:var(--accent);color:var(--accent)}
 .more{text-align:center;margin-top:28px}
+
+/* ===== menu utama ===== */
+.cats .wrap{overflow:visible;gap:2px;align-items:center}
+.ddb{font:inherit;font-size:.9rem;font-weight:500;background:transparent;border:0;color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer}
+.ddb:hover{background:var(--accent-soft)}
+.ddb.on{background:var(--accent);color:#fff}
+.dd{position:relative}
+.ddp{position:absolute;top:calc(100% + 8px);left:0;min-width:250px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:8px;z-index:30;display:flex;flex-direction:column}
+.ddp[hidden]{display:none}
+.ddp a{display:flex;justify-content:space-between;gap:16px;border-radius:8px;padding:9px 12px}
+.ddp a.on{background:var(--accent-soft);color:var(--accent)}
+.ddp em{font-style:normal;color:var(--muted);font-size:.8rem}
+.ddp span{padding:9px 12px;color:var(--muted);font-size:.9rem}
+.hb{display:none}
+.side{top:84px}
+.contact{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+@media (max-width:760px){
+  .hb{display:inline-block}
+  .cats{display:none}
+  .cats.open{display:block}
+  .cats .wrap{flex-direction:column;align-items:stretch}
+  .ddp{position:static;box-shadow:none;border:0;padding:0 0 0 12px}
+}
 </style>
 </head>
 <body>
@@ -193,6 +216,12 @@ const firebaseConfig = {
   appId: "1:716670343008:web:66fd5a7e872572c12df005"
 };
 const ADMIN_EMAIL = "admin@wapblog.com"; // email akun admin di Firebase Auth (PIN = kata sandinya)
+const ABOUT_MD = `Ceritakan siapa kamu dan apa isi blog ini.
+
+## Tentang blog
+
+Tulis di sini apa yang dibahas, siapa penulisnya, dan kenapa blog ini dibuat.`;
+const CONTACT = { email: "", whatsapp: "", instagram: "" }; // whatsapp: nomor dengan kode negara, mis. 6281234567890
 const BLOG_NAME = "Blog Saya";
 const BLOG_TAGLINE = "Tulisan, catatan, dan cerita.";
 /* =========================== */
@@ -215,6 +244,14 @@ document.addEventListener("click", e => {
   document.documentElement.dataset.theme = theme; b.textContent = theme === "dark" ? "Terang" : "Gelap";
   try { localStorage.setItem("theme", theme); } catch (err) {}
 });
+const closeDD = () => { const d = document.getElementById("ddp"); if (d) { d.hidden = true; document.getElementById("ddb")?.setAttribute("aria-expanded", "false"); } };
+document.addEventListener("click", e => {
+  const hb = e.target.closest("#hb"), ddb = e.target.closest("#ddb"), mn = document.getElementById("mn"), dp = document.getElementById("ddp");
+  if (hb && mn) { hb.setAttribute("aria-expanded", mn.classList.toggle("open")); return; }
+  if (ddb && dp) { dp.hidden = !dp.hidden; ddb.setAttribute("aria-expanded", String(!dp.hidden)); return; }
+  if (!e.target.closest(".dd")) closeDD();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDD(); });
 const state = { user: null, authReady: !configured, cat: "", q: "", cats: [], posts: null };
 
 /* ---------- helpers ---------- */
@@ -296,16 +333,25 @@ async function ensurePosts(force) {
   try { state.posts = await loadPublished(); } catch (e) { state.posts = []; state.err = true; }
   state.cats = [...new Set(state.posts.map(p => p.category).filter(Boolean))].sort();
 }
-const masthead = (active = "") => `
+const masthead = (active = "", cat = "") => `
   <header class="top"><div class="wrap">
+    <button class="adm hb" id="hb" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="mn">Menu</button>
     <a class="brand" href="#/">${esc(BLOG_NAME)}</a>
     <form id="sf"><input id="sq" type="search" placeholder="Cari artikel" aria-label="Cari artikel" value="${esc(state.q)}"></form>
     <button class="adm" id="th" type="button" aria-label="Ganti tema">${theme === "dark" ? "Terang" : "Gelap"}</button>
     <a class="adm" href="#/admin">${state.user ? "Dasbor" : "Admin"}</a>
   </div></header>
-  <nav class="cats" aria-label="Kategori"><div class="wrap">
-    <a href="#/" class="${active === "" ? "on" : ""}">Beranda</a>
-    ${state.cats.map(c => `<a href="${catSlug(c)}" class="${active === c ? "on" : ""}">${esc(c)}</a>`).join("")}
+  <nav class="cats" id="mn" aria-label="Menu utama"><div class="wrap">
+    ${[["home", "#/", "Beranda"], ["terbaru", "#/terbaru", "Terbaru"], ["populer", "#/terpopuler", "Terpopuler"]]
+      .map(([k, h, t]) => `<a href="${h}" class="${active === k ? "on" : ""}">${t}</a>`).join("")}
+    <div class="dd">
+      <button class="ddb ${active === "kategori" ? "on" : ""}" id="ddb" type="button" aria-expanded="false" aria-controls="ddp">Kategori &#9662;</button>
+      <div class="ddp" id="ddp" hidden>
+        ${state.cats.map(c => `<a href="${catSlug(c)}" class="${c === cat ? "on" : ""}">${esc(c)}<em>${(state.posts || []).filter(p => p.category === c).length}</em></a>`).join("") || "<span>Belum ada kategori</span>"}
+      </div>
+    </div>
+    <a href="#/tentang" class="${active === "tentang" ? "on" : ""}">Tentang</a>
+    <a href="#/kontak" class="${active === "kontak" ? "on" : ""}">Kontak</a>
   </div></nav>`;
 const bindHead = () => document.getElementById("sf")?.addEventListener("submit", e => {
   e.preventDefault(); state.q = document.getElementById("sq").value; state.cat = "";
@@ -344,17 +390,19 @@ function sidebar() {
 }
 
 /* ---------- public: beranda & kategori ---------- */
-async function viewHome(cat = "", tag = "") {
+async function viewHome(cat = "", tag = "", mode = "") {
   if (!configured) { $app.innerHTML = masthead() + setupNotice() + footer(); return; }
   await ensurePosts(true);
   state.cat = cat;
   const q = state.q.trim().toLowerCase();
   const list = state.posts.filter(p => (!cat || p.category === cat) && (!tag || (p.tags || []).includes(tag)) &&
     (!q || (p.title + " " + (p.excerpt || "") + " " + (p.tags || []).join(" ")).toLowerCase().includes(q)));
-  const hero = !q && list.length ? list[0] : null, rest = hero ? list.slice(1) : list;
-  const heading = q ? `Hasil pencarian “${esc(state.q)}”` : tag ? "#" + esc(tag) : cat ? esc(cat) : "Artikel terbaru";
+  if (mode === "populer") list.sort((x, y) => (y.views || 0) - (x.views || 0));
+  const key = q ? "" : mode || (cat ? "kategori" : tag ? "" : "home");
+  const hero = !q && !mode && list.length ? list[0] : null, rest = hero ? list.slice(1) : list;
+  const heading = mode === "terbaru" ? "Semua artikel terbaru" : mode === "populer" ? "Artikel terpopuler" : q ? `Hasil pencarian “${esc(state.q)}”` : tag ? "#" + esc(tag) : cat ? esc(cat) : "Artikel terbaru";
   let shown = 6;
-  $app.innerHTML = masthead(cat) + `<main class="shell"><section>
+  $app.innerHTML = masthead(key, cat) + `<main class="shell"><section>
     ${state.err ? `<div class="notice">Gagal memuat artikel. Cek aturan Firestore dan koneksi internet.</div>` : ""}
     ${hero ? `<a class="hero" href="#/post/${hero.id}">
       ${safeUrl(hero.coverUrl) ? `<img src="${esc(safeUrl(hero.coverUrl))}" alt="">` : ""}<div class="sh"></div>
@@ -369,6 +417,21 @@ async function viewHome(cat = "", tag = "") {
   const draw = () => { gr.innerHTML = rest.slice(0, shown).map(card).join(""); more.hidden = shown >= rest.length; };
   more.addEventListener("click", () => { shown += 6; draw(); });
   draw();
+}
+
+async function viewPage(key) {
+  if (!configured) { $app.innerHTML = masthead() + setupNotice() + footer(); return; }
+  await ensurePosts();
+  const c = CONTACT, links = [
+    c.whatsapp && `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${esc(c.whatsapp.replace(/\D/g, ""))}">WhatsApp</a>`,
+    c.email && `<a class="btn" href="mailto:${esc(c.email)}">${esc(c.email)}</a>`,
+    c.instagram && `<a class="btn" target="_blank" rel="noopener" href="https://instagram.com/${esc(c.instagram.replace(/^@/, ""))}">Instagram</a>`
+  ].filter(Boolean);
+  const body = key === "tentang" ? `<h1>Tentang</h1><div class="prose">${md(ABOUT_MD)}</div>`
+    : `<h1>Kontak</h1><p>Ada pertanyaan atau mau bekerja sama? Hubungi lewat salah satu jalur ini.</p>
+       ${links.length ? `<div class="contact">${links.join("")}</div>` : "<p>Informasi kontak belum diisi.</p>"}`;
+  $app.innerHTML = masthead(key) + `<main class="wrap narrow article">${body}</main>` + footer();
+  bindHead();
 }
 
 function bindShare(p, url) {
@@ -396,7 +459,7 @@ async function viewPost(id) {
       <button class="btn small" id="cp" type="button">Salin tautan</button>
       ${navigator.share ? `<button class="btn small" id="ns" type="button">Lainnya</button>` : ""}</div>
     ${rel.length ? `<h2 class="sec">Baca juga</h2><div class="grid">${rel.map(card).join("")}</div>` : ""}`;
-  $app.innerHTML = masthead(p.category || "") + `
+  $app.innerHTML = masthead("") + `
     <main class="shell"><section class="article">
       <a class="back" href="#/">Kembali ke beranda</a>
       <h1>${esc(p.title)}</h1>
@@ -546,6 +609,8 @@ function route() {
   const parts = (location.hash.slice(1) || "/").split("/").filter(Boolean);
   if (parts[0] === "post" && parts[1]) return viewPost(parts[1]);
   if (parts[0] === "tag" && parts[1]) { state.q = ""; return viewHome("", decodeURIComponent(parts[1])); }
+  if (parts[0] === "terbaru" || parts[0] === "terpopuler") { state.q = ""; return viewHome("", "", parts[0] === "terbaru" ? "terbaru" : "populer"); }
+  if (parts[0] === "tentang" || parts[0] === "kontak") return viewPage(parts[0]);
   if (parts[0] === "kategori" && parts[1]) { state.q = ""; return viewHome(decodeURIComponent(parts[1])); }
   if (parts[0] === "admin") {
     if (!configured) { $app.innerHTML = masthead() + setupNotice() + footer(); return; }
