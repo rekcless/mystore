@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --ink:#16212C; --muted:#5B6B7A; --line:#D5DCE3;
+  --accent:#0B6B5D; --accent-soft:#E3F1EE; --danger:#B3261E; --warn-soft:#FFF1D6;
+  --head:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Literata",Georgia,"Times New Roman",serif;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.65}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:3px}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+.narrow{max-width:700px}
+
+/* masthead */
+.mast{padding:44px 0 28px;border-bottom:2px solid var(--ink)}
+.mast .wrap{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.brand{font-family:var(--head);font-weight:700;font-size:clamp(2rem,6vw,3.4rem);line-height:1;letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+.tagline{margin:8px 0 0;color:var(--muted);font-family:var(--ui);font-size:.95rem}
+.mast nav{font-family:var(--ui);font-size:.9rem;display:flex;gap:16px}
+.mast nav a{color:var(--ink)}
+
+/* list */
+.tools{display:flex;gap:12px;flex-wrap:wrap;margin:28px 0 8px;font-family:var(--ui)}
+.tools input{flex:1 1 220px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--ui);font-size:.85rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.post-row{display:grid;grid-template-columns:150px 1fr;gap:8px 28px;padding:26px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.post-row:hover h2{color:var(--accent)}
+.post-row .meta{font-family:var(--ui);font-size:.85rem;color:var(--muted);padding-top:.5rem}
+.post-row h2{font-family:var(--head);font-size:1.6rem;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+.post-row p{margin:0;color:var(--muted)}
+.post-row img{display:block;max-width:100%;border-radius:6px;margin-top:14px}
+.empty{padding:60px 0;text-align:center;color:var(--muted);font-family:var(--ui)}
+
+/* article */
+.article{padding:40px 0 80px}
+.article .back{font-family:var(--ui);font-size:.9rem}
+.article h1{font-family:var(--head);font-size:clamp(2rem,5vw,3rem);line-height:1.1;letter-spacing:-.02em;margin:18px 0 10px}
+.article .byline{font-family:var(--ui);color:var(--muted);font-size:.9rem;margin-bottom:28px}
+.article .cover{width:100%;border-radius:8px;margin-bottom:28px}
+.prose{font-size:1.1rem;max-width:68ch}
+.prose h2,.prose h3{font-family:var(--head);line-height:1.2;margin:2em 0 .5em}
+.prose img{max-width:100%;border-radius:6px}
+.prose blockquote{margin:1.5em 0;padding:.2em 1.2em;border-left:4px solid var(--accent);background:var(--accent-soft);font-style:italic}
+.prose code{background:#E3E8ED;padding:.1em .35em;border-radius:4px;font-size:.9em}
+.prose pre{background:#16212C;color:#EAF0F5;padding:16px;border-radius:8px;overflow-x:auto}
+.prose pre code{background:none;padding:0;color:inherit}
+.prose hr{border:0;border-top:1px solid var(--line);margin:2em 0}
+
+/* controls */
+input,select,textarea{font:inherit;font-family:var(--ui);font-size:.95rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{resize:vertical;line-height:1.5}
+label{display:block;font-family:var(--ui);font-size:.85rem;font-weight:600;margin:16px 0 6px}
+.btn{font-family:var(--ui);font-size:.9rem;font-weight:600;border:1px solid var(--ink);background:var(--surface);color:var(--ink);padding:9px 16px;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.btn.small{padding:5px 10px;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:wait}
+
+/* admin */
+.bar{background:var(--ink);color:#fff;font-family:var(--ui)}
+.bar .wrap{display:flex;justify-content:space-between;align-items:center;padding-top:12px;padding-bottom:12px;gap:12px;flex-wrap:wrap}
+.bar a{color:#fff}
+.bar .btn{background:transparent;color:#fff;border-color:#8896A3}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;margin:28px 0}
+.login{max-width:380px;margin:60px auto}
+.login h1,.admin h1{font-family:var(--head);margin:0 0 4px}
+.err{color:var(--danger);font-family:var(--ui);font-size:.9rem;margin-top:12px}
+.head-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:32px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-family:var(--ui);font-size:.92rem}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.8rem;color:var(--muted);font-weight:600}
+td.act{white-space:nowrap;display:flex;gap:6px}
+.badge{font-size:.78rem;padding:3px 9px;border-radius:999px;background:var(--warn-soft)}
+.badge.pub{background:var(--accent-soft);color:var(--accent)}
+.editor{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.preview{border:1px solid var(--line);border-radius:8px;padding:16px;background:#fff;min-height:240px;overflow:auto}
+.preview .prose{font-size:1rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;font-family:var(--ui);font-size:.9rem;padding:10px 18px;border-radius:8px;z-index:10}
+.foot{border-top:1px solid var(--line);padding:28px 0 48px;font-family:var(--ui);font-size:.85rem;color:var(--muted)}
+.notice{background:var(--warn-soft);padding:16px;border-radius:8px;font-family:var(--ui);margin:28px 0}
+
+@media (max-width:760px){
+  .post-row{grid-template-columns:1fr}
+  .post-row .meta{padding-top:0}
+  .editor,.row2{grid-template-columns:1fr}
+}
+
+/* ===== tampilan baru ===== */
+:root{--bg:#F4F6F8;--ink:#101828;--gold:#F5B83D;--r:14px;--shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06)}
+.top{background:var(--ink);color:#fff;position:sticky;top:0;z-index:20;font-family:var(--ui)}
+.top .wrap{max-width:1180px;display:flex;align-items:center;gap:20px;height:64px}
+.top .brand{color:#fff;font-size:1.5rem;margin-right:auto}
+.top form{display:flex}
+.top input{background:#1D2939;border-color:#344054;color:#fff;width:200px;padding:8px 12px}
+.top .adm{color:#fff;font-size:.88rem;text-decoration:none;border:1px solid #475467;padding:7px 14px;border-radius:999px}
+.cats{background:var(--surface);border-bottom:1px solid var(--line);font-family:var(--ui)}
+.cats .wrap{max-width:1180px;display:flex;gap:4px;overflow-x:auto;padding-top:6px;padding-bottom:6px}
+.cats a{white-space:nowrap;text-decoration:none;color:var(--ink);font-size:.9rem;font-weight:500;padding:8px 14px;border-radius:999px}
+.cats a:hover{background:var(--accent-soft)}
+.cats a.on{background:var(--accent);color:#fff}
+.shell{max-width:1180px;margin:0 auto;padding:28px 20px 60px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:32px}
+.hero{position:relative;display:block;border-radius:var(--r);overflow:hidden;min-height:380px;color:#fff;text-decoration:none;background:linear-gradient(135deg,#0B6B5D,#16212C);box-shadow:var(--shadow)}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero .sh{position:absolute;inset:0;background:linear-gradient(to top,rgba(16,24,40,.92),rgba(16,24,40,.15) 70%)}
+.hero .tx{position:absolute;left:0;right:0;bottom:0;padding:28px}
+.hero h2{font-family:var(--head);font-size:clamp(1.6rem,3.4vw,2.4rem);line-height:1.15;margin:10px 0 8px;letter-spacing:-.02em}
+.hero p{margin:0;opacity:.85;max-width:60ch}
+.tag{display:inline-block;font-family:var(--ui);font-size:.78rem;font-weight:600;background:var(--gold);color:#101828;padding:3px 10px;border-radius:999px}
+.sec{font-family:var(--head);font-size:1.3rem;margin:34px 0 16px;display:flex;align-items:center;gap:10px}
+.sec:after{content:"";flex:1;height:2px;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.card{background:var(--surface);border-radius:var(--r);overflow:hidden;text-decoration:none;color:inherit;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .2s}
+.card:hover{transform:translateY(-4px)}
+.card .im{aspect-ratio:16/9;background:linear-gradient(135deg,var(--accent-soft),#CFE3DE);overflow:hidden}
+.card .im img{width:100%;height:100%;object-fit:cover;display:block}
+.card .bd{padding:16px 18px 20px;display:flex;flex-direction:column;gap:6px}
+.card h3{font-family:var(--head);font-size:1.2rem;line-height:1.25;margin:2px 0}
+.card p{margin:0;color:var(--muted);font-size:.95rem}
+.card .mt{font-family:var(--ui);font-size:.8rem;color:var(--muted)}
+.card .ct{font-family:var(--ui);font-size:.8rem;font-weight:600;color:var(--accent)}
+.side{display:flex;flex-direction:column;gap:24px;align-self:start;position:sticky;top:132px}
+.box{background:var(--surface);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+.box h4{font-family:var(--head);font-size:1.1rem;margin:0 0 14px}
+.top5{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.top5 a{display:grid;grid-template-columns:34px 1fr;gap:12px;text-decoration:none;color:var(--ink);align-items:start}
+.top5 b{font-family:var(--head);font-size:1.5rem;line-height:1;color:var(--gold)}
+.top5 span{font-weight:600;line-height:1.3;font-size:.98rem}
+.top5 small{display:block;font-family:var(--ui);color:var(--muted);font-weight:400;margin-top:2px}
+.catlist{list-style:none;margin:0;padding:0;font-family:var(--ui)}
+.catlist a{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.catlist a:hover{color:var(--accent)}
+.catlist em{font-style:normal;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:0 9px;font-size:.8rem}
+.about{background:var(--accent);color:#fff}
+.about p{margin:0;font-family:var(--ui);font-size:.92rem;opacity:.92}
+.foot2{background:var(--ink);color:#C0C8D2;font-family:var(--ui);font-size:.9rem;padding:36px 0}
+.foot2 .wrap{max-width:1180px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.foot2 a{color:#fff;margin-right:14px}
+.shell .article{padding:0}
+.shell .prose{max-width:none}
+@media (max-width:900px){.shell{grid-template-columns:1fr}.side{position:static}.top input{width:130px}}
+@media (max-width:560px){.grid{grid-template-columns:1fr}.top .wrap{height:auto;padding-top:10px;padding-bottom:10px;flex-wrap:wrap}}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ====== ISI BAGIAN INI ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyARLKefBjVk7OfQrHtLl9ArFs-x02tyjNI",
+  authDomain: "wapblog-cbec4.firebaseapp.com",
+  projectId: "wapblog-cbec4",
+  storageBucket: "wapblog-cbec4.firebasestorage.app",
+  messagingSenderId: "716670343008",
+  appId: "1:716670343008:web:66fd5a7e872572c12df005"
+};
+const ADMIN_EMAIL = "admin@wapblog.com"; // email akun admin di Firebase Auth (PIN = kata sandinya)
+const BLOG_NAME = "Blog Saya";
+const BLOG_TAGLINE = "Tulisan, catatan, dan cerita.";
+/* =========================== */
+
+const configured = !firebaseConfig.apiKey.startsWith("ISI_");
+let db, auth;
+if (configured) {
+  const fbApp = initializeApp(firebaseConfig);
+  db = getFirestore(fbApp);
+  auth = getAuth(fbApp);
+}
+
+const $app = document.getElementById("app");
+const state = { user: null, authReady: !configured, cat: "", q: "", cats: [], posts: null };
+
+/* ---------- helpers ---------- */
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
+const fmtDate = ts => {
+  const d = ts?.toDate ? ts.toDate() : null;
+  return d ? d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Baru saja";
+};
+const secs = ts => ts?.seconds ?? Date.now() / 1000;
+
+function toast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+
+/* ---------- mini markdown (aman: HTML di-escape dulu) ---------- */
+function inline(s) {
+  s = esc(s);
+  s = s.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">');
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  return s;
+}
+function md(src) {
+  const lines = String(src || "").replace(/\r/g, "").split("\n");
+  let out = "", i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (/^```/.test(l)) {
+      let code = []; i++;
+      while (i < lines.length && !/^```/.test(lines[i])) code.push(lines[i++]);
+      i++; out += "<pre><code>" + esc(code.join("\n")) + "</code></pre>"; continue;
+    }
+    let m;
+    if ((m = l.match(/^(#{1,3})\s+(.*)/))) { const n = m[1].length + 1; out += `<h${n}>${inline(m[2])}</h${n}>`; i++; continue; }
+    if (/^---+\s*$/.test(l)) { out += "<hr>"; i++; continue; }
+    if (/^>\s?/.test(l)) {
+      let q = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) q.push(lines[i++].replace(/^>\s?/, ""));
+      out += "<blockquote>" + inline(q.join(" ")) + "</blockquote>"; continue;
+    }
+    if (/^\s*[-*]\s+/.test(l)) {
+      let it = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) it.push("<li>" + inline(lines[i++].replace(/^\s*[-*]\s+/, "")) + "</li>");
+      out += "<ul>" + it.join("") + "</ul>"; continue;
+    }
+    if (/^\s*\d+\.\s+/.test(l)) {
+      let it = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) it.push("<li>" + inline(lines[i++].replace(/^\s*\d+\.\s+/, "")) + "</li>");
+      out += "<ol>" + it.join("") + "</ol>"; continue;
+    }
+    if (!l.trim()) { i++; continue; }
+    let p = [];
+    while (i < lines.length && lines[i].trim() && !/^(#{1,3}\s|```|>|---+\s*$|\s*[-*]\s+|\s*\d+\.\s+)/.test(lines[i])) p.push(lines[i++]);
+    out += "<p>" + inline(p.join(" ")) + "</p>";
+  }
+  return out;
+}
+
+/* ---------- data ---------- */
+async function loadPublished() {
+  const snap = await getDocs(query(collection(db, "posts"), where("status", "==", "published")));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => secs(b.createdAt) - secs(a.createdAt));
+}
+async function loadAll() {
+  const snap = await getDocs(query(collection(db, "posts"), orderBy("createdAt", "desc")));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/* ---------- layout pieces ---------- */
+const catSlug = c => "#/kategori/" + encodeURIComponent(c);
+async function ensurePosts(force) {
+  if (state.posts && !force) return;
+  try { state.posts = await loadPublished(); } catch (e) { state.posts = []; state.err = true; }
+  state.cats = [...new Set(state.posts.map(p => p.category).filter(Boolean))].sort();
+}
+const masthead = (active = "") => `
+  <header class="top"><div class="wrap">
+    <a class="brand" href="#/">${esc(BLOG_NAME)}</a>
+    <form id="sf"><input id="sq" type="search" placeholder="Cari artikel" aria-label="Cari artikel" value="${esc(state.q)}"></form>
+    <a class="adm" href="#/admin">${state.user ? "Dasbor" : "Admin"}</a>
+  </div></header>
+  <nav class="cats" aria-label="Kategori"><div class="wrap">
+    <a href="#/" class="${active === "" ? "on" : ""}">Beranda</a>
+    ${state.cats.map(c => `<a href="${catSlug(c)}" class="${active === c ? "on" : ""}">${esc(c)}</a>`).join("")}
+  </div></nav>`;
+const bindHead = () => document.getElementById("sf")?.addEventListener("submit", e => {
+  e.preventDefault(); state.q = document.getElementById("sq").value; state.cat = "";
+  if (location.hash === "#/" || location.hash === "") route(); else location.hash = "#/";
+});
+const footer = () => `<footer class="foot2"><div class="wrap">
+  <div><strong style="color:#fff">${esc(BLOG_NAME)}</strong><br>${esc(BLOG_TAGLINE)}</div>
+  <div>${state.cats.map(c => `<a href="${catSlug(c)}">${esc(c)}</a>`).join("")}</div>
+  <div>&copy; ${new Date().getFullYear()} ${esc(BLOG_NAME)}</div></div></footer>`;
+const setupNotice = () => `
+  <div class="wrap"><div class="notice"><strong>Firebase belum diisi.</strong>
+  Buka file ini, isi <code>firebaseConfig</code> di bagian atas script, lalu muat ulang halaman.</div></div>`;
+const readMin = t => Math.max(1, Math.round(String(t || "").split(/\s+/).length / 200));
+const card = p => `
+  <a class="card" href="#/post/${p.id}">
+    <div class="im">${safeUrl(p.coverUrl) ? `<img src="${esc(safeUrl(p.coverUrl))}" alt="" loading="lazy">` : ""}</div>
+    <div class="bd">${p.category ? `<span class="ct">${esc(p.category)}</span>` : ""}
+      <h3>${esc(p.title)}</h3><p>${esc(p.excerpt || "")}</p>
+      <span class="mt">${fmtDate(p.createdAt)} &middot; ${readMin(p.content)} menit baca</span></div>
+  </a>`;
+function sidebar() {
+  const top = [...state.posts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
+  const counts = {}; state.posts.forEach(p => { if (p.category) counts[p.category] = (counts[p.category] || 0) + 1; });
+  return `<aside class="side">
+    <div class="box"><h4>Artikel terpopuler</h4><ol class="top5">
+      ${top.map((p, i) => `<li><a href="#/post/${p.id}"><b>${i + 1}</b><span>${esc(p.title)}<small>${p.views || 0}x dibaca</small></span></a></li>`).join("") || "<li>Belum ada data.</li>"}
+    </ol></div>
+    <div class="box"><h4>Kategori</h4><ul class="catlist">
+      ${state.cats.map(c => `<li><a href="${catSlug(c)}">${esc(c)}<em>${counts[c]}</em></a></li>`).join("") || "<li>Belum ada kategori.</li>"}
+    </ul></div>
+    <div class="box about"><h4>Tentang blog</h4><p>${esc(BLOG_TAGLINE)}</p></div>
+  </aside>`;
+}
+
+/* ---------- public: beranda & kategori ---------- */
+async function viewHome(cat = "") {
+  if (!configured) { $app.innerHTML = masthead() + setupNotice() + footer(); return; }
+  await ensurePosts(true);
+  state.cat = cat;
+  const q = state.q.trim().toLowerCase();
+  const list = state.posts.filter(p => (!cat || p.category === cat) &&
+    (!q || (p.title + " " + (p.excerpt || "")).toLowerCase().includes(q)));
+  const hero = !q && list.length ? list[0] : null, rest = hero ? list.slice(1) : list;
+  const heading = q ? `Hasil pencarian “${esc(state.q)}”` : cat ? esc(cat) : "Artikel terbaru";
+  $app.innerHTML = masthead(cat) + `<main class="shell"><section>
+    ${state.err ? `<div class="notice">Gagal memuat artikel. Cek aturan Firestore dan koneksi internet.</div>` : ""}
+    ${hero ? `<a class="hero" href="#/post/${hero.id}">
+      ${safeUrl(hero.coverUrl) ? `<img src="${esc(safeUrl(hero.coverUrl))}" alt="">` : ""}<div class="sh"></div>
+      <div class="tx">${hero.category ? `<span class="tag">${esc(hero.category)}</span>` : ""}
+      <h2>${esc(hero.title)}</h2><p>${esc(hero.excerpt || "")}</p></div></a>` : ""}
+    <h2 class="sec">${heading}</h2>
+    ${rest.length || hero ? `<div class="grid">${rest.map(card).join("")}</div>` : `<p class="empty">Belum ada artikel yang cocok.</p>`}
+  </section>${sidebar()}</main>` + footer();
+  bindHead();
+}
+
+/* ---------- public: baca artikel ---------- */
+async function viewPost(id) {
+  if (!configured) { $app.innerHTML = masthead() + setupNotice() + footer(); return; }
+  await ensurePosts();
+  let p = null;
+  try { const s = await getDoc(doc(db, "posts", id)); if (s.exists()) p = { id: s.id, ...s.data() }; } catch (e) {}
+  if (!p) { $app.innerHTML = masthead() + `<main class="shell"><section class="article"><a class="back" href="#/">Kembali ke beranda</a><h1>Artikel tidak ditemukan</h1><p>Artikel ini belum terbit atau sudah dihapus.</p></section>${sidebar()}</main>` + footer(); bindHead(); return; }
+  try { if (p.status === "published" && !state.user && !sessionStorage.getItem("v_" + id)) { sessionStorage.setItem("v_" + id, "1"); updateDoc(doc(db, "posts", id), { views: increment(1) }).catch(() => {}); } } catch (e) {}
+  document.title = p.title + " – " + BLOG_NAME;
+  $app.innerHTML = masthead(p.category || "") + `
+    <main class="shell"><section class="article">
+      <a class="back" href="#/">Kembali ke beranda</a>
+      <h1>${esc(p.title)}</h1>
+      <div class="byline">${fmtDate(p.createdAt)}${p.category ? " &middot; " + esc(p.category) : ""} &middot; ${readMin(p.content)} menit baca${p.status !== "published" ? " &middot; Draft (hanya admin)" : ""}</div>
+      ${safeUrl(p.coverUrl) ? `<img class="cover" src="${esc(safeUrl(p.coverUrl))}" alt="">` : ""}
+      <div class="prose">${md(p.content)}</div>
+    </section>${sidebar()}</main>` + footer(); bindHead();
+}
+
+/* ---------- admin: login ---------- */
+function viewLogin() {
+  $app.innerHTML = masthead() + `
+    <main class="wrap"><form class="panel login" id="lf">
+      <h1>Masuk admin</h1>
+      <label for="pin">PIN</label>
+      <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" minlength="6" autocomplete="off" required>
+      <p class="err" id="er" role="alert"></p>
+      <p><button class="btn primary" type="submit">Masuk</button></p>
+    </form></main>` + footer();
+  document.getElementById("pin").focus();
+  document.getElementById("lf").addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = e.target.querySelector("button"); btn.disabled = true;
+    try { await signInWithEmailAndPassword(auth, ADMIN_EMAIL, document.getElementById("pin").value); }
+    catch (err) {
+      document.getElementById("er").textContent = err.code === "auth/too-many-requests"
+        ? "Terlalu banyak percobaan. Coba lagi beberapa menit lagi."
+        : "PIN salah.";
+      btn.disabled = false;
+    }
+  });
+}
+
+const adminBar = () => `
+  <div class="bar"><div class="wrap">
+    <a href="#/admin"><strong>Dasbor ${esc(BLOG_NAME)}</strong></a>
+    <span><a href="#/">Lihat blog</a> &nbsp; <button class="btn small" id="out">Keluar</button></span>
+  </div></div>`;
+const bindOut = () => document.getElementById("out").addEventListener("click", () => signOut(auth));
+
+/* ---------- admin: daftar ---------- */
+async function viewDash() {
+  $app.innerHTML = adminBar() + `<main class="wrap admin"><p class="empty">Memuat…</p></main>`; bindOut();
+  let posts = [];
+  try { posts = await loadAll(); } catch (e) {
+    $app.innerHTML = adminBar() + `<main class="wrap"><div class="notice">Gagal memuat artikel. Pastikan aturan Firestore sudah diatur dan akun ini diizinkan.</div></main>`; bindOut(); return;
+  }
+  $app.innerHTML = adminBar() + `
+    <main class="wrap admin">
+      <div class="head-row"><h1>Artikel (${posts.length})</h1><a class="btn primary" href="#/admin/new">Tulis artikel</a></div>
+      <div class="panel table-scroll">
+        ${posts.length ? `<table>
+          <thead><tr><th>Judul</th><th>Kategori</th><th>Status</th><th>Tanggal</th><th></th></tr></thead>
+          <tbody>${posts.map(p => `<tr>
+            <td>${esc(p.title)}</td><td>${esc(p.category || "-")}</td>
+            <td><span class="badge ${p.status === "published" ? "pub" : ""}">${p.status === "published" ? "Terbit" : "Draft"}</span></td>
+            <td>${fmtDate(p.createdAt)}</td>
+            <td class="act">
+              <a class="btn small" href="#/post/${p.id}">Lihat</a>
+              <a class="btn small" href="#/admin/edit/${p.id}">Edit</a>
+              <button class="btn small danger" data-del="${p.id}">Hapus</button>
+            </td></tr>`).join("")}</tbody></table>` : `<p class="empty">Belum ada artikel. Mulai dengan tombol “Tulis artikel”.</p>`}
+      </div>
+    </main>`; bindOut();
+  document.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm("Hapus artikel ini? Tindakan ini tidak bisa dibatalkan.")) return;
+    try { await deleteDoc(doc(db, "posts", b.dataset.del)); toast("Artikel dihapus"); viewDash(); }
+    catch (e) { toast("Gagal menghapus artikel"); }
+  }));
+}
+
+/* ---------- admin: editor ---------- */
+async function viewEditor(id) {
+  let p = { title: "", category: "", excerpt: "", coverUrl: "", content: "", status: "draft" };
+  if (id) {
+    try { const s = await getDoc(doc(db, "posts", id)); if (s.exists()) p = { id, ...s.data() }; } catch (e) {}
+  }
+  $app.innerHTML = adminBar() + `
+    <main class="wrap admin">
+      <div class="head-row"><h1>${id ? "Edit artikel" : "Tulis artikel"}</h1><a href="#/admin">Kembali ke daftar</a></div>
+      <form class="panel" id="pf">
+        <label for="t">Judul</label><input id="t" required value="${esc(p.title)}">
+        <div class="row2">
+          <div><label for="c">Kategori</label><input id="c" value="${esc(p.category)}" placeholder="mis. Teknologi"></div>
+          <div><label for="s">Status</label><select id="s">
+            <option value="draft" ${p.status !== "published" ? "selected" : ""}>Draft</option>
+            <option value="published" ${p.status === "published" ? "selected" : ""}>Terbit</option></select></div>
+        </div>
+        <label for="x">Ringkasan</label><input id="x" maxlength="220" value="${esc(p.excerpt)}" placeholder="Satu atau dua kalimat untuk daftar artikel">
+        <label for="u">Tautan gambar sampul</label><input id="u" type="url" value="${esc(p.coverUrl)}" placeholder="https://…">
+        <div class="editor">
+          <div>
+            <label for="b">Isi artikel (Markdown)</label>
+            <div class="toolbar">
+              <button type="button" class="btn small" data-w="**|**">Tebal</button>
+              <button type="button" class="btn small" data-w="*|*">Miring</button>
+              <button type="button" class="btn small" data-w="## |">Judul</button>
+              <button type="button" class="btn small" data-w="[|](https://)">Tautan</button>
+              <button type="button" class="btn small" data-w="- |">Daftar</button>
+              <button type="button" class="btn small" data-w="> |">Kutipan</button>
+              <button type="button" class="btn small" data-w="![alt](|)">Gambar</button>
+            </div>
+            <textarea id="b" rows="18">${esc(p.content)}</textarea>
+          </div>
+          <div><label>Pratinjau</label><div class="preview"><div class="prose" id="pv"></div></div></div>
+        </div>
+        <p class="err" id="er" role="alert"></p>
+        <p><button class="btn primary" type="submit" id="sv">Simpan</button></p>
+      </form>
+    </main>`; bindOut();
+
+  const b = document.getElementById("b"), pv = document.getElementById("pv");
+  const upd = () => pv.innerHTML = md(b.value) || "<p style='color:var(--muted)'>Pratinjau muncul di sini.</p>";
+  b.addEventListener("input", upd); upd();
+  document.querySelectorAll("[data-w]").forEach(btn => btn.addEventListener("click", () => {
+    const [a, z] = btn.dataset.w.split("|");
+    const s = b.selectionStart, e = b.selectionEnd, sel = b.value.slice(s, e);
+    b.setRangeText(a + sel + z, s, e, "end");
+    if (!sel) { const pos = s + a.length; b.setSelectionRange(pos, pos); }
+    b.focus(); upd();
+  }));
+
+  document.getElementById("pf").addEventListener("submit", async e => {
+    e.preventDefault();
+    const sv = document.getElementById("sv"); sv.disabled = true;
+    const data = {
+      title: document.getElementById("t").value.trim(), category: document.getElementById("c").value.trim(),
+      excerpt: document.getElementById("x").value.trim(), coverUrl: document.getElementById("u").value.trim(),
+      content: b.value, status: document.getElementById("s").value, updatedAt: serverTimestamp()
+    };
+    try {
+      if (id) await updateDoc(doc(db, "posts", id), data);
+      else await addDoc(collection(db, "posts"), { ...data, createdAt: serverTimestamp() });
+      toast("Tersimpan"); location.hash = "#/admin";
+    } catch (err) {
+      document.getElementById("er").textContent = "Gagal menyimpan. Cek aturan Firestore dan akun yang dipakai.";
+      sv.disabled = false;
+    }
+  });
+}
+
+/* ---------- router ---------- */
+function route() {
+  window.scrollTo(0, 0);
+  document.title = BLOG_NAME;
+  const parts = (location.hash.slice(1) || "/").split("/").filter(Boolean);
+  if (parts[0] === "post" && parts[1]) return viewPost(parts[1]);
+  if (parts[0] === "kategori" && parts[1]) { state.q = ""; return viewHome(decodeURIComponent(parts[1])); }
+  if (parts[0] === "admin") {
+    if (!configured) { $app.innerHTML = masthead() + setupNotice() + footer(); return; }
+    if (!state.authReady) return;
+    if (!state.user) return viewLogin();
+    if (parts[1] === "new") return viewEditor(null);
+    if (parts[1] === "edit" && parts[2]) return viewEditor(parts[2]);
+    return viewDash();
+  }
+  return viewHome("");
+}
+window.addEventListener("hashchange", route);
+if (configured) {
+  onAuthStateChanged(auth, u => { state.user = u; state.authReady = true; route(); });
+} else route();
+</script>
+</body>
+</html>
